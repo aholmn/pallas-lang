@@ -63,7 +63,7 @@ let lexer program =
         loop program (pos + (String.length value)) (token::acc)
       else if Str.string_match reg_semi program pos then
         let value = Str.matched_string program in
-        let token = Tok_Semi(value) in
+        let token = Tok_Semi (value) in
         loop program (pos + (String.length value)) (token::acc)
       else if Str.string_match reg_eqeq program pos then
         let value = Str.matched_string program in

@@ -28,22 +28,19 @@ let rec eval_expr ast =
      end
   | Diff (expr1, expr2) ->
      begin match eval_expr expr1, eval_expr expr2 with
-     | Int x, Int y       -> Int (x + y)
-     | String x, String y -> String (x ^ y)
+     | Int x, Int y       -> Int (x - y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Frac (expr1, expr2) ->
      begin match eval_expr expr1, eval_expr expr2 with
-     | Int x, Int y       -> Int (x + y)
-     | String x, String y -> String (x ^ y)
+     | Int x, Int y       -> Int (x / y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Prod (expr1, expr2) ->
      begin match eval_expr expr1, eval_expr expr2 with
-     | Int x, Int y       -> Int (x + y)
-     | String x, String y -> String (x ^ y)
+     | Int x, Int y       -> Int (x * y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
@@ -101,8 +98,8 @@ let eval (statements) =
 let () =
   let program = read_file "test.hi" in
   let tokens = lexer program in
-  let statements = parse tokens in
   List.iter print_token tokens;
+  let statements = parse tokens in
   eval(statements);
 
 (*

@@ -21,7 +21,7 @@ type token =
   | Tok_Less         of string
   | Tok_Bool         of string * bool
 
-let lexeme token =
+let token_to_str token =
   match token with
   | Tok_Print s        -> s
   | Tok_Str s          -> s
