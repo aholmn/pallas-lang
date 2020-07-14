@@ -46,16 +46,16 @@ let rec eval_expr ast =
      end
   | Comparison (token, expr1, expr2) ->        
      begin match token, eval_expr expr1, eval_expr expr2 with
-      | Tok_EqualEqual _, Int x, Int y       -> Bool (x == y)
-      | Tok_EqualEqual _, Bool x, Bool y     -> Bool (x == y)
-      | Tok_EqualEqual _, String x, String y -> Bool (x == y)
-      | Tok_NotEqual _, Int x, Int y         -> Bool (x != y)
-      | Tok_NotEqual _, Bool x, Bool y       -> Bool (x != y)
-      | Tok_NotEqual _, String x, String y   -> Bool (x != y)
-      | Tok_GreaterEqual _, Int x, Int y     -> Bool (x >= y)
-      | Tok_LessEqual _, Int x, Int y        -> Bool (x <= y)
-      | Tok_Less _, Int x, Int y             -> Bool (x < y)
-      | Tok_Greater _, Int x, Int y          -> Bool (x > y)
+      | Tok_EqualEqual,  Int x, Int y       -> Bool (x == y)
+      | Tok_EqualEqual, Bool x, Bool y     -> Bool (x == y)
+      | Tok_EqualEqual,  String x, String y -> Bool (x == y)
+      | Tok_NotEqual,  Int x, Int y         -> Bool (x != y)
+      | Tok_NotEqual,  Bool x, Bool y       -> Bool (x != y)
+      | Tok_NotEqual,  String x, String y   -> Bool (x != y)
+      | Tok_GreaterEqual, Int x, Int y     -> Bool (x >= y)
+      | Tok_LessEqual, Int x, Int y        -> Bool (x <= y)
+      | Tok_Less, Int x, Int y             -> Bool (x < y)
+      | Tok_Greater,  Int x, Int y          -> Bool (x > y)
       | _, String x, Int y ->
          raise (RuntimeError "Cannot compare string with int")
       | _, String x, Bool y ->
@@ -73,8 +73,9 @@ let rec eval_expr ast =
      end
   | Id id   -> Hashtbl.find environment id
   | Value v -> v
+     
 
-let eval_stmt s =
+let rec eval_stmt s =
   match s with
   | Print e ->
      begin match eval_expr e with
@@ -90,7 +91,16 @@ let eval_stmt s =
        Hashtbl.replace environment s (eval_expr e)
      else
        raise (RuntimeError (sprintf "Cannot assign undeclared variable: %s" s))
+  | If (expr, stmt) ->
+     begin match eval_expr(expr) with
+     | Bool s ->
+        if s then
+          List.iter eval_stmt stmt
+     | _ ->
+        raise (RuntimeError ("cannot compar"));
+     end
 
+               
 let eval (statements) =
   List.iter eval_stmt statements
 
@@ -98,7 +108,7 @@ let eval (statements) =
 let () =
   let program = read_file "test.hi" in
   let tokens = lexer program in
-  List.iter print_token tokens;
+  (* List.iter printf tokens; *)
   let statements = parse tokens in
   eval(statements);
 
@@ -106,13 +116,15 @@ let () =
   STATEMENTS
 
   Stmt     -> Print | Decl | Assign
-  Decl     -> var Id "=" Comparison;
-  Print    -> "print" Comparison ";"
-  Assign   -> Id = Comparison;
+  Decl     -> var Id "=" Compare;
+  Print    -> "print" Compare ";"
+  Assign   -> Id = Compare;
+  If       -> if Compare do Stmt* end
+
  
   EXPRESSIONS
   
-  Comparison -> Add ("!="|"=="|">"|">="|"<"|"<=") Add | Add
+  Compare -> Add ("!="|"=="|">"|">="|"<"|"<=") Compare | Add
 
   Add        -> Mul ("+"|"-") Add | Mul
   Mul        -> Prim ("*"|"/") Mul | Prim
@@ -123,3 +135,16 @@ let () =
   Id    -> [A-Za-z]
   Boolean -> true | false
  *)
+
+
+ (*
+      print 5;
+      end
+
+      if true do 
+         print 5;
+       end
+
+      end
+
+  *)
