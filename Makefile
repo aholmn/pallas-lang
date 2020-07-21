@@ -13,7 +13,7 @@ byte:
 	ocamlc -o interpreter str.cma lexer.cmo token.cmo parser.cmo interpreter.cmo
 
 run:
-	./interpreter
+	./interpreter examples/if_statement.psc
 
 clean:
 	rm -f *.cmx

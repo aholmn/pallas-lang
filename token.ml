@@ -1,17 +1,17 @@
-open Format
+(* open Format *)
 
 type token =
   | Tok_Print        of string
   | Tok_Str          of string
   | Tok_Num          of int
   | Tok_Bool         of bool
+  | Tok_Id           of string
   | Tok_Div
   | Tok_Mul
   | Tok_Add
   | Tok_Sub
-  | Tok_Eof          of string
+  | Tok_Eof          
   | Tok_Semi
-  | Tok_Id           of string
   | Tok_Var         
   | Tok_Equal        
   | Tok_EqualEqual  
@@ -33,7 +33,7 @@ let token_to_str token =
   | Tok_Mul            -> "*"
   | Tok_Add            -> "+"
   | Tok_Sub            -> "-"
-  | Tok_Eof s          -> s
+  | Tok_Eof            -> "eof"
   | Tok_Semi           -> ";"
   | Tok_Id s           -> s
   | Tok_Var           -> "var"

@@ -3,9 +3,6 @@ open Token
 open Lexer
 open Parser
 
-(* TODO: comparison *)
-(* TODO: run file from main *)
-
 exception RuntimeError of string
 
 let environment = Hashtbl.create 1024
@@ -56,17 +53,17 @@ let rec eval_expr ast =
       | Tok_LessEqual, Int x, Int y        -> Bool (x <= y)
       | Tok_Less, Int x, Int y             -> Bool (x < y)
       | Tok_Greater,  Int x, Int y          -> Bool (x > y)
-      | _, String x, Int y ->
+      | _, String _, Int _ ->
          raise (RuntimeError "Cannot compare string with int")
-      | _, String x, Bool y ->
+      | _, String _, Bool _ ->
          raise (RuntimeError "Cannot compare string with bool")
-      | _, Int x, String y ->
+      | _, Int _, String _ ->
         raise (RuntimeError "Cannot compare int with string")
-      | _, Int x, Bool y ->
+      | _, Int _, Bool _ ->
          raise (RuntimeError "Cannot compare int with bool")
-      | _, Bool x, Int y ->
+      | _, Bool _, Int _ ->
          raise (RuntimeError "Cannot compare bool with int")
-      | _, Bool x, String y ->
+      | _, Bool _, String _ ->
          raise (RuntimeError "Cannot compare bool with string")
       | _ ->
          raise (RuntimeError "Could not evaluate ast")
@@ -101,50 +98,13 @@ let rec eval_stmt s =
      end
 
                
-let eval (statements) =
+let eval statements =
   List.iter eval_stmt statements
 
-
 let () =
-  let program = read_file "test.hi" in
+  let program = read_file Sys.argv.(1)  in
   let tokens = lexer program in
   (* List.iter printf tokens; *)
   let statements = parse tokens in
   eval(statements);
 
-(*
-  STATEMENTS
-
-  Stmt     -> Print | Decl | Assign
-  Decl     -> var Id "=" Compare;
-  Print    -> "print" Compare ";"
-  Assign   -> Id = Compare;
-  If       -> if Compare do Stmt* end
-
- 
-  EXPRESSIONS
-  
-  Compare -> Add ("!="|"=="|">"|">="|"<"|"<=") Compare | Add
-
-  Add        -> Mul ("+"|"-") Add | Mul
-  Mul        -> Prim ("*"|"/") Mul | Prim
- 
-
-  Prim  -> Num | Id | Boolean
-  Num   -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-  Id    -> [A-Za-z]
-  Boolean -> true | false
- *)
-
-
- (*
-      print 5;
-      end
-
-      if true do 
-         print 5;
-       end
-
-      end
-
-  *)

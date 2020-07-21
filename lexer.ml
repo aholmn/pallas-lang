@@ -1,9 +1,5 @@
 open Token
 
-
-(* TODO ADD BOOL false true *)
-(* put on github *)
-
 let reg_alpha     = Str.regexp "[A-Za-z]+"
 let reg_num       = Str.regexp "[0-9]+"
 let reg_add       = Str.regexp "+"
@@ -34,7 +30,7 @@ let keyword str =
 let lexer (program : string) : token list =
   let rec loop program pos acc =    
     if pos >= String.length program then
-      List.rev (Tok_Eof("eof")::acc)
+      List.rev (Tok_Eof::acc)
     else
       if Str.string_match reg_alpha program pos then
         let value = Str.matched_string program in
