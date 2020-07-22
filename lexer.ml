@@ -24,6 +24,7 @@ let keyword str =
   | "if"    -> Tok_If
   | "end"   -> Tok_End
   | "do"    -> Tok_Do
+  | "else"  -> Tok_Else
   | _       -> Tok_Id str
 
 

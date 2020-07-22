@@ -26,19 +26,24 @@ type value =
   | String of string
 
 type expr =
-  | Value      of value
-  | Sum        of expr * expr
-  | Diff       of expr * expr
-  | Frac       of expr * expr
-  | Prod       of expr * expr
-  | Comparison of token * expr * expr
-  | Id         of string
+  | Value        of value
+  | Sum          of expr * expr
+  | Diff         of expr * expr
+  | Frac         of expr * expr
+  | Prod         of expr * expr
+  | Greater      of expr * expr
+  | Lesser       of expr * expr
+  | GreaterEqual of expr * expr
+  | LesserEqual  of expr * expr
+  | Equal        of expr * expr
+  | NotEqual     of expr * expr
+  | Id           of string
 
 type stmt =
   | Print of expr
   | Declaration of string * expr
   | Assign of string * expr
-  | If of expr * stmt list
+  | If of expr * stmt list * stmt list
 
 let parse_primary () =
   let token = peek () in
@@ -92,22 +97,22 @@ let rec parse_comparison () =
   match token with
   | Tok_EqualEqual ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     Equal (left, parse_comparison ())
   | Tok_NotEqual ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     NotEqual (left, parse_comparison ())
   | Tok_GreaterEqual ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     GreaterEqual (left, parse_comparison ())
   | Tok_LessEqual ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     LesserEqual (left, parse_comparison ())
   | Tok_Less ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     Lesser (left, parse_comparison ())
   | Tok_Greater ->
      consume token;
-     Comparison (token, left, parse_comparison ())
+     Greater (left, parse_comparison ())
   | _ ->
      left
 
@@ -140,17 +145,33 @@ let rec parse_statement () =
      end
   | Tok_If ->
      consume token;
-     let expr = parse_comparison () in
-     consume Tok_Do;
-     let stmts = parse_statements_until Tok_End [] in
-     consume Tok_End;
-     If (expr, stmts)
+     let expr, if_stmts, else_stmts = parse_if_statement () in
+     If (expr, if_stmts, else_stmts)
   | _ ->
      raise (InvalidExpression "invalid statement")
 
-and parse_statements_until token acc =
-  if peek() = token then List.rev acc
-  else parse_statements_until token (parse_statement ()::acc)
+and parse_if_statement () =
+  let expr = parse_comparison () in
+     consume Tok_Do;
+     let if_stmts = parse_statements_until [Tok_End; Tok_Else] [] in
+     let else_stmts = match peek () with
+       | Tok_Else ->
+          consume Tok_Else;
+          let s = parse_statements_until [Tok_End] [] in
+          consume Tok_End;
+          s
+       | Tok_End ->
+          consume Tok_End;
+          []
+       | token ->
+          raise (InvalidExpression
+                   (sprintf "expected end but got %s" (token_to_str token)))
+     in
+     (expr, if_stmts, else_stmts)
+
+and parse_statements_until tokens acc =
+  if List.mem (peek ()) tokens then List.rev acc
+  else parse_statements_until tokens (parse_statement ()::acc)
 
 let rec parse_program acc =
   let token = peek () in
