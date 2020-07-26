@@ -20,46 +20,21 @@ let consume token =
   | [] ->
      raise (InvalidExpression "no tokens left to consume")
 
-type value =
-  | Bool   of bool
-  | Int    of int
-  | String of string
-
-type expr =
-  | Value        of value
-  | Sum          of expr * expr
-  | Diff         of expr * expr
-  | Frac         of expr * expr
-  | Prod         of expr * expr
-  | Greater      of expr * expr
-  | Lesser       of expr * expr
-  | GreaterEqual of expr * expr
-  | LesserEqual  of expr * expr
-  | Equal        of expr * expr
-  | NotEqual     of expr * expr
-  | Id           of string
-
-type stmt =
-  | Print of expr
-  | Declaration of string * expr
-  | Assign of string * expr
-  | If of expr * stmt list * stmt list
-
 let parse_primary () =
   let token = peek () in
   match token with
   | Tok_Num value ->
      consume token;
-     Value (Int value)
+     Ast.Value (Int value)
   | Tok_Bool value ->
      consume token;
-     Value (Bool value)
+     Ast.Value (Bool value)
   | Tok_Id value ->
      consume token;
-     Id value
+     Ast.Id value
   | Tok_Str value ->
      consume token;
-     Value (String value)
+     Ast.Value (String value)
   | _ ->
      raise (InvalidExpression
               (sprintf "expected value but got %s" (token_to_str token)))
@@ -70,10 +45,10 @@ let rec parse_multiplication () =
   match token with
   | Tok_Mul ->
      consume token;
-     Prod (left, parse_multiplication ())
+     Ast.Prod (left, parse_multiplication ())
   | Tok_Div ->
      consume token;
-     Frac (left, parse_multiplication ())
+     Ast.Frac (left, parse_multiplication ())
   | _ ->
      left
 
@@ -84,10 +59,10 @@ let rec parse_addition () =
   match token with
   | Tok_Add ->
      consume token;
-     Sum (left, parse_addition ())
+     Ast.Sum (left, parse_addition ())
   | Tok_Sub ->
      consume token;
-     Diff (left, parse_addition ())
+     Ast.Diff (left, parse_addition ())
   | _ ->
      left
 
@@ -97,22 +72,22 @@ let rec parse_comparison () =
   match token with
   | Tok_EqualEqual ->
      consume token;
-     Equal (left, parse_comparison ())
+     Ast.Equal (left, parse_comparison ())
   | Tok_NotEqual ->
      consume token;
-     NotEqual (left, parse_comparison ())
+     Ast.NotEqual (left, parse_comparison ())
   | Tok_GreaterEqual ->
      consume token;
-     GreaterEqual (left, parse_comparison ())
+     Ast.GreaterEqual (left, parse_comparison ())
   | Tok_LessEqual ->
      consume token;
-     LesserEqual (left, parse_comparison ())
+     Ast.LesserEqual (left, parse_comparison ())
   | Tok_Less ->
      consume token;
-     Lesser (left, parse_comparison ())
+     Ast.Lesser (left, parse_comparison ())
   | Tok_Greater ->
      consume token;
-     Greater (left, parse_comparison ())
+     Ast.Greater (left, parse_comparison ())
   | _ ->
      left
 
@@ -123,13 +98,13 @@ let rec parse_statement () =
      consume token;
      let expr = parse_comparison () in
      consume Tok_Semi;
-     Print expr
+     Ast.Print expr
   | Tok_Id str ->
      consume token;
      consume Tok_Equal;
      let expr = parse_comparison () in
      consume Tok_Semi;
-     Assign (str, expr)
+     Ast.Assign (str, expr)
   | Tok_Var ->
      consume token;
      let next_token = peek () in
@@ -139,14 +114,14 @@ let rec parse_statement () =
         consume Tok_Equal;
         let expr = parse_comparison () in
         consume Tok_Semi;
-        Declaration (str, expr)
+        Ast.Declaration (str, expr)
      | _ ->
         raise (InvalidExpression "expected variable name after var")
      end
   | Tok_If ->
      consume token;
      let expr, if_stmts, else_stmts = parse_if_statement () in
-     If (expr, if_stmts, else_stmts)
+     Ast.If (expr, if_stmts, else_stmts)
   | _ ->
      raise (InvalidExpression "invalid statement")
 
@@ -182,6 +157,6 @@ let rec parse_program acc =
      let statement =  parse_statement () in
      parse_program(statement::acc)
 
-let parse (ts: token list) : stmt list =
+let parse (ts: token list) : Ast.stmt list =
   tokens := ts;
   parse_program []

@@ -1,6 +1,6 @@
 type t =
   {
-    bindings : (string, Parser.value) Hashtbl.t;
+    bindings : (string, Ast.value) Hashtbl.t;
     outer: t option
   }
 

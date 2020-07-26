@@ -1,11 +1,10 @@
 open Format
 open Token
 open Lexer
-open Parser
 
 exception RuntimeError of string
 
-let rec eval_expr (env: Env.t) (ast: expr) : value =
+let rec eval_expr (env: Env.t) (ast: Ast.expr) : Ast.value =
   let eval_expr' expr = eval_expr env expr in
   match ast with
   | Sum (expr1, expr2) ->
@@ -21,7 +20,7 @@ let rec eval_expr (env: Env.t) (ast: expr) : value =
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
-  | Frac (expr1, expr2) ->
+  | Frac (expr2, expr1) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
      | Int x, Int y -> Int (x / y)
      | _, _ ->
@@ -50,20 +49,20 @@ let rec eval_expr (env: Env.t) (ast: expr) : value =
   | Value v ->
      v
 
-and truthy (x : value) : bool =
+and truthy (x : Ast.value) : bool =
   match x with
   | Bool b -> b
   | Int  i -> if i > 0 then true else false
   | String _ -> false
 
-and eval_relation (op : 'a) (v1 : value) (v2 : value) : bool =
+and eval_relation (op : 'a) (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
   | Int i1, Int i2 ->
      op i1 i2
   | _ ->
      raise (RuntimeError "Cannot use '<' '<=' '>' '>=' on anything else than integers")
 
-and eval_equal (v1 : value) (v2 : value) : bool =
+and eval_equal (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
   | String s1, String s2 ->
      s1 == s2
@@ -82,7 +81,7 @@ and eval_not_equal v1 v2 =
      truthy v1 == truthy v2
 
 
-let rec eval_stmt (env: Env.t) (s: stmt) : unit =
+let rec eval_stmt (env: Env.t) (s: Ast.stmt) : unit =
   match s with
   | Print e ->
      begin match eval_expr env e with
@@ -105,7 +104,7 @@ let rec eval_stmt (env: Env.t) (s: stmt) : unit =
         raise (RuntimeError ("cannot compar"));
      end
 
-let eval (statements: stmt list) : unit =
+let eval (statements: Ast.stmt list) : unit =
   let env = Env.make None in
   List.iter (eval_stmt env) statements
 
@@ -120,7 +119,7 @@ let () =
     let program = read_file Sys.argv.(1)  in
     let tokens = lexer program in
     (* List.iter printf tokens; *)
-    let statements = parse tokens in
+    let statements = Parser.parse tokens in
     eval(statements)
   with
   | RuntimeError s ->

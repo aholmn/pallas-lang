@@ -23,8 +23,7 @@ type token =
   | Tok_Do
   | Tok_Else
 
-let token_to_str token =
-  match token with
+let token_to_str = function
   | Tok_Print s      -> s
   | Tok_Str s        -> s
   | Tok_Num l        -> string_of_int l
