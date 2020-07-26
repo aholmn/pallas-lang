@@ -1,5 +1,3 @@
-(* open Format *)
-
 type token =
   | Tok_Print of string
   | Tok_Str   of string
@@ -53,22 +51,22 @@ let token_to_str token =
 
 (* let print_token t =
  *   match t with
- *   | Tok_Str l          -> printf "token: str,          lexeme: %s\n" l
- *   | Tok_Num l          -> printf "token: num,          lexeme: %d\n" l
- *   | Tok_Print l        -> printf "token: print,        lexeme: %s\n" l
- *   | Tok_Add            -> printf "token: add,          lexeme: +\n"
- *   | Tok_Sub            -> printf "token: sub,          lexeme: -\n"
- *   | Tok_Mul            -> printf "token: mul,          lexeme: *\n"
- *   | Tok_Div            -> printf "token: div,          lexeme: /\n"
- *   | Tok_Eof l          -> printf "token: eof,          lexeme: %s\n" l
- *   | Tok_Semi           -> printf "token: semi,         lexeme: ;\n"
- *   | Tok_Id l           -> printf "token: Id,           lexeme: %s\n" l
- *   | Tok_Var           -> printf "token: Var,          lexeme: var\n"
- *   | Tok_Equal         -> printf "token: Equal,        lexeme: =\n"
- *   | Tok_EqualEqual    -> printf "token: EqualEqual,   lexeme: ==\n"
- *   | Tok_LessEqual     -> printf "token: LessEqual,    lexeme: <=\n"
- *   | Tok_GreaterEqual  -> printf "token: GreaterEqual, lexeme: >=\n"
- *   | Tok_NotEqual      -> printf "token: NotEqual      lexeme: !=\n"
- *   | Tok_Less          -> printf "token: Less,         lexeme: <\n"
- *   | Tok_Greater       -> printf "token: Greater,      lexeme: >\n"
- *   | Tok_Bool l         -> printf "token: Bool,         lexeme: %B\n" l *)
+ *   | Tok_Str l        -> Format.printf "token: str,          lexeme: %s\n" l
+ *   | Tok_Num l        -> Format.printf "token: num,          lexeme: %d\n" l
+ *   | Tok_Print l      -> Format.printf "token: print,        lexeme: %s\n" l
+ *   | Tok_Add          -> Format.printf "token: add,          lexeme: +\n"
+ *   | Tok_Sub          -> Format.printf "token: sub,          lexeme: -\n"
+ *   | Tok_Mul          -> Format.printf "token: mul,          lexeme: *\n"
+ *   | Tok_Div          -> Format.printf "token: div,          lexeme: /\n"
+ *   | Tok_Eof l        -> Format.printf "token: eof,          lexeme: %s\n" l
+ *   | Tok_Semi         -> Format.printf "token: semi,         lexeme: ;\n"
+ *   | Tok_Id l         -> Format.printf "token: Id,           lexeme: %s\n" l
+ *   | Tok_Var          -> Format.printf "token: Var,          lexeme: var\n"
+ *   | Tok_Equal        -> Format.printf "token: Equal,        lexeme: =\n"
+ *   | Tok_EqualEqual   -> Format.printf "token: EqualEqual,   lexeme: ==\n"
+ *   | Tok_LessEqual    -> Format.printf "token: LessEqual,    lexeme: <=\n"
+ *   | Tok_GreaterEqual -> Format.printf "token: GreaterEqual, lexeme: >=\n"
+ *   | Tok_NotEqual     -> Format.printf "token: NotEqual      lexeme: !=\n"
+ *   | Tok_Less         -> Format.printf "token: Less,         lexeme: <\n"
+ *   | Tok_Greater      -> Format.printf "token: Greater,      lexeme: >\n"
+ *   | Tok_Bool l       -> Format.printf "token: Bool,         lexeme: %B\n" l *)

@@ -1,4 +1,5 @@
 open Token
+open Format
 
 let reg_alpha     = Str.regexp "[A-Za-z]+"
 let reg_num       = Str.regexp "[0-9]+"
@@ -14,11 +15,12 @@ let reg_leq       = Str.regexp "<="
 let reg_less      = Str.regexp "<"
 let reg_greater   = Str.regexp ">"
 let reg_eq        = Str.regexp "="
+let reg_qoute     = Str.regexp "\""
 
 let keyword str =
   match str with
   | "print" -> Tok_Print str
-  | "var"   -> Tok_Var 
+  | "var"   -> Tok_Var
   | "false" -> Tok_Bool false
   | "true"  -> Tok_Bool true
   | "if"    -> Tok_If
@@ -27,13 +29,24 @@ let keyword str =
   | "else"  -> Tok_Else
   | _       -> Tok_Id str
 
+let rec parse_str program pos acc =
+  let s = String.get program pos in
+  if s = '\"' then
+    acc
+  else
+    parse_str program (pos + 1) (acc ^ String.make 1 s)
 
 let lexer (program : string) : token list =
-  let rec loop program pos acc =    
+  let rec loop program pos acc =
     if pos >= String.length program then
       List.rev (Tok_Eof::acc)
     else
-      if Str.string_match reg_alpha program pos then
+      if Str.string_match reg_qoute program pos then
+        let value = parse_str program (pos + 1) "" in
+        let token = Tok_Str (value) in
+        printf "%s\n" value;
+        loop program (pos + 2 + (String.length value)) (token::acc)
+      else if Str.string_match reg_alpha program pos then
         let value = Str.matched_string program in
         let token = keyword value in
         loop program (pos + (String.length value)) (token::acc)
@@ -92,4 +105,4 @@ let lexer (program : string) : token list =
       else
         loop program (pos + 1) acc
   in
-  loop program 0 []  
+  loop program 0 []
