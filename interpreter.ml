@@ -1,6 +1,4 @@
 open Format
-open Token
-open Lexer
 
 exception RuntimeError of string
 
@@ -117,12 +115,11 @@ let read_file filename =
 let () =
   try
     let program = read_file Sys.argv.(1)  in
-    let tokens = lexer program in
-    (* List.iter printf tokens; *)
+    let tokens = Lexer.scan program in
     let statements = Parser.parse tokens in
     eval(statements)
-  with
-  | RuntimeError s ->
-     printf "RuntimeError: %s\n" s
-  | Env.NotfoundError s ->
+    with
+    | RuntimeError s ->
+       printf "RuntimeError: %s\n" s
+    | Env.NotfoundError s ->
      printf "NotfoundError: %s\n" s

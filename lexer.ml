@@ -1,108 +1,94 @@
-open Token
-open Format
-
-let reg_alpha     = Str.regexp "[A-Za-z]+"
-let reg_num       = Str.regexp "[0-9]+"
-let reg_add       = Str.regexp "+"
-let reg_div       = Str.regexp "/"
-let reg_mul       = Str.regexp "*"
-let reg_sub       = Str.regexp "-"
-let reg_semi      = Str.regexp ";"
-let reg_eqeq      = Str.regexp "=="
-let reg_noteq     = Str.regexp "!="
-let reg_geq       = Str.regexp ">="
-let reg_leq       = Str.regexp "<="
-let reg_less      = Str.regexp "<"
-let reg_greater   = Str.regexp ">"
-let reg_eq        = Str.regexp "="
-let reg_qoute     = Str.regexp "\""
-
-let keyword str =
-  match str with
-  | "print" -> Tok_Print str
-  | "var"   -> Tok_Var
-  | "false" -> Tok_Bool false
-  | "true"  -> Tok_Bool true
-  | "if"    -> Tok_If
-  | "end"   -> Tok_End
-  | "do"    -> Tok_Do
-  | "else"  -> Tok_Else
-  | _       -> Tok_Id str
-
-let rec parse_str program pos acc =
-  let s = String.get program pos in
-  if s = '\"' then
-    acc
-  else
-    parse_str program (pos + 1) (acc ^ String.make 1 s)
-
-let lexer (program : string) : token list =
-  let rec loop program pos acc =
-    if pos >= String.length program then
-      List.rev (Tok_Eof::acc)
+let rec scan input =
+  let rec scan_aux input pos tokens =
+    if pos >= String.length input then
+      List.rev (Token.Tok_Eof::tokens)
     else
-      if Str.string_match reg_qoute program pos then
-        let value = parse_str program (pos + 1) "" in
-        let token = Tok_Str (value) in
-        printf "%s\n" value;
-        loop program (pos + 2 + (String.length value)) (token::acc)
-      else if Str.string_match reg_alpha program pos then
-        let value = Str.matched_string program in
-        let token = keyword value in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_num program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Num (int_of_string value) in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_add program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Add in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_sub program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Sub in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_mul program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Mul  in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_div program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Div in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_semi program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Semi in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_eqeq program pos then
-        let value = Str.matched_string program in
-        let token = Tok_EqualEqual in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_noteq program pos then
-        let value = Str.matched_string program in
-        let token = Tok_NotEqual in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_geq program pos then
-        let value = Str.matched_string program in
-        let token = Tok_GreaterEqual in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_leq program pos then
-        let value = Str.matched_string program in
-        let token = Tok_LessEqual in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_less program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Less in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_greater program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Greater  in
-        loop program (pos + (String.length value)) (token::acc)
-      else if Str.string_match reg_eq program pos then
-        let value = Str.matched_string program in
-        let token = Tok_Equal in
-        loop program (pos + (String.length value)) (token::acc)
+      if is_digit input.[pos] then
+        let (next_pos, digit) = get_digit input pos in
+        scan_aux input next_pos (Token.Tok_Num (digit)::tokens)
+      else if is_alpha input.[pos] then
+        let (next_pos, alpha) = get_alphanumerical input pos in
+        scan_aux input next_pos ((keyword alpha)::tokens)
       else
-        loop program (pos + 1) acc
+        match input.[pos] with
+        | ' '  -> scan_aux input (pos+1) tokens
+        | '\t' -> scan_aux input (pos+1) tokens
+        | '+'  -> scan_aux input (pos+1) (Token.Tok_Add::tokens)
+        | '-'  -> scan_aux input (pos+1) (Token.Tok_Sub::tokens)
+        | '*'  -> scan_aux input (pos+1) (Token.Tok_Mul::tokens)
+        | '/'  -> scan_aux input (pos+1) (Token.Tok_Div::tokens)
+        | ';'  -> scan_aux input (pos+1) (Token.Tok_Semi::tokens)
+        | '>'  ->
+           if input.[pos+1] = '=' then
+             scan_aux input (pos+2) (Token.Tok_GreaterEqual::tokens)
+           else
+             scan_aux input (pos+1) (Token.Tok_Greater::tokens)
+        | '<'  ->
+           if input.[pos+1] = '=' then
+             scan_aux input (pos+2) (Token.Tok_LessEqual::tokens)
+           else
+             scan_aux input (pos+1) (Token.Tok_Less::tokens)
+        | '!'  ->
+           if input.[pos+1] = '=' then
+             scan_aux input (pos+2) (Token.Tok_NotEqual::tokens)
+           else
+             failwith "Unary not yet implemented"
+        | '=' ->
+           if input.[pos+1] = '=' then
+             scan_aux input (pos+2) (Token.Tok_EqualEqual::tokens)
+           else
+             scan_aux input (pos+1) (Token.Tok_Equal::tokens)
+        | '\"' ->
+           let str = parse_str input (pos+1) in
+           scan_aux input (pos+2 + String.length str) (Token.Tok_Str (str)::tokens)
+        | _ ->
+           scan_aux input (pos+1) tokens
   in
-  loop program 0 []
+  scan_aux input 0 []
+
+and keyword s =
+  match s with
+  | "print" -> Token.Tok_Print s
+  | "var"   -> Token.Tok_Var
+  | "false" -> Token.Tok_Bool false
+  | "true"  -> Token.Tok_Bool true
+  | "if"    -> Token.Tok_If
+  | "end"   -> Token.Tok_End
+  | "do"    -> Token.Tok_Do
+  | "else"  -> Token.Tok_Else
+  | _       -> Token.Tok_Id s
+
+and is_digit char = let code = Char.code char in
+                    code >= Char.code '0' && code <= Char.code '9'
+
+and is_alpha char = let code = Char.code char in
+                    code >= Char.code 'A' && code <= Char.code 'z'
+
+and is_alphanumerical char = is_digit char || is_alpha char
+
+and get_alphanumerical str pos =
+  let rec get_alpha' i =
+    if pos+i < String.length str && is_alphanumerical str.[pos+i] then
+      get_alpha' (i + 1)
+    else
+      (pos+i, String.sub str pos i)
+  in
+  get_alpha' 0
+
+and get_digit str pos =
+  let rec get_digit' i  =
+    if pos+i < String.length str && is_digit str.[pos+i] then
+      get_digit' (i + 1)
+    else
+      (pos+i, int_of_string (String.sub str pos i))
+  in
+  get_digit' 0
+
+and parse_str str pos =
+  let rec parse_str' i acc =
+    if str.[i] = '\"' then
+      acc
+    else
+      parse_str' (i + 1) (acc ^ String.make 1 str.[i])
+  in
+  parse_str' pos ""
