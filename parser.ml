@@ -20,16 +20,16 @@ let consume token =
 let parse_primary () =
   let token = peek () in
   match token with
-  | Token.Tok_Num value ->
+  | Token.Num value ->
      consume token;
      Ast.Value (Int value)
-  | Token.Tok_Bool value ->
+  | Token.Bool value ->
      consume token;
      Ast.Value (Bool value)
-  | Token.Tok_Id value ->
+  | Token.Id value ->
      consume token;
      Ast.Id value
-  | Token.Tok_Str value ->
+  | Token.Str value ->
      consume token;
      Ast.Value (String value)
   | _ ->
@@ -40,10 +40,10 @@ let rec parse_multiplication () =
   let left  = parse_primary () in
   let token = peek () in
   match token with
-  | Token.Tok_Mul ->
+  | Token.Mul ->
      consume token;
      Ast.Prod (left, parse_multiplication ())
-  | Token.Tok_Div ->
+  | Token.Div ->
      consume token;
      Ast.Frac (left, parse_multiplication ())
   | _ ->
@@ -54,10 +54,10 @@ let rec parse_addition () =
   let left = parse_multiplication () in
   let token = peek () in
   match token with
-  | Token.Tok_Add ->
+  | Token.Add ->
      consume token;
      Ast.Sum (left, parse_addition ())
-  | Token.Tok_Sub ->
+  | Token.Sub ->
      consume token;
      Ast.Diff (left, parse_addition ())
   | _ ->
@@ -67,22 +67,22 @@ let rec parse_comparison () =
   let left = parse_addition () in
   let token = peek () in
   match token with
-  | Token.Tok_EqualEqual ->
+  | Token.EqualEqual ->
      consume token;
      Ast.Equal (left, parse_comparison ())
-  | Token.Tok_NotEqual ->
+  | Token.NotEqual ->
      consume token;
      Ast.NotEqual (left, parse_comparison ())
-  | Token.Tok_GreaterEqual ->
+  | Token.GreaterEqual ->
      consume token;
      Ast.GreaterEqual (left, parse_comparison ())
-  | Token.Tok_LessEqual ->
+  | Token.LessEqual ->
      consume token;
      Ast.LesserEqual (left, parse_comparison ())
-  | Token.Tok_Less ->
+  | Token.Less ->
      consume token;
      Ast.Lesser (left, parse_comparison ())
-  | Token.Tok_Greater ->
+  | Token.Greater ->
      consume token;
      Ast.Greater (left, parse_comparison ())
   | _ ->
@@ -91,31 +91,31 @@ let rec parse_comparison () =
 let rec parse_statement () =
   let token = peek() in
   match token with
-  | Token.Tok_Print _ ->
+  | Token.Print _ ->
      consume token;
      let expr = parse_comparison () in
-     consume Token.Tok_Semi;
+     consume Token.Semi;
      Ast.Print expr
-  | Token.Tok_Id str ->
+  | Token.Id str ->
      consume token;
-     consume Token.Tok_Equal;
+     consume Token.Equal;
      let expr = parse_comparison () in
-     consume Token.Tok_Semi;
+     consume Token.Semi;
      Ast.Assign (str, expr)
-  | Token.Tok_Var ->
+  | Token.Var ->
      consume token;
      let next_token = peek () in
      begin match next_token with
-     | Token.Tok_Id str ->
+     | Token.Id str ->
         consume next_token;
-        consume Token.Tok_Equal;
+        consume Token.Equal;
         let expr = parse_comparison () in
-        consume Token.Tok_Semi;
+        consume Token.Semi;
         Ast.Declaration (str, expr)
      | _ ->
         raise (InvalidExpression "expected variable name after var")
      end
-  | Token.Tok_If ->
+  | Token.If ->
      consume token;
      let expr, if_stmts, else_stmts = parse_if_statement () in
      Ast.If (expr, if_stmts, else_stmts)
@@ -124,16 +124,16 @@ let rec parse_statement () =
 
 and parse_if_statement () =
   let expr = parse_comparison () in
-     consume Token.Tok_Do;
-     let if_stmts = parse_statements_until [Token.Tok_End; Token.Tok_Else] [] in
+     consume Token.Do;
+     let if_stmts = parse_statements_until [Token.End; Token.Else] [] in
      let else_stmts = match peek () with
-       | Token.Tok_Else ->
-          consume Token.Tok_Else;
-          let s = parse_statements_until [Token.Tok_End] [] in
-          consume Token.Tok_End;
+       | Token.Else ->
+          consume Token.Else;
+          let s = parse_statements_until [Token.End] [] in
+          consume Token.End;
           s
-       | Token.Tok_End ->
-          consume Token.Tok_End;
+       | Token.End ->
+          consume Token.End;
           []
        | token ->
           raise (InvalidExpression
@@ -148,7 +148,7 @@ and parse_statements_until tokens acc =
 let rec parse_program acc =
   let token = peek () in
   match token with
-  | Token.Tok_Eof ->
+  | Token.Eof ->
      List.rev acc
   | _ ->
      let statement =  parse_statement () in

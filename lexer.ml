@@ -1,11 +1,11 @@
 let rec scan input =
   let rec scan_aux input pos tokens =
     if pos >= String.length input then
-      List.rev (Token.Tok_Eof::tokens)
+      List.rev (Token.Eof::tokens)
     else
       if is_digit input.[pos] then
         let (next_pos, digit) = get_digit input pos in
-        scan_aux input next_pos (Token.Tok_Num (digit)::tokens)
+        scan_aux input next_pos (Token.Num (digit)::tokens)
       else if is_alpha input.[pos] then
         let (next_pos, alpha) = get_alphanumerical input pos in
         scan_aux input next_pos ((keyword alpha)::tokens)
@@ -13,34 +13,34 @@ let rec scan input =
         match input.[pos] with
         | ' '  -> scan_aux input (pos+1) tokens
         | '\t' -> scan_aux input (pos+1) tokens
-        | '+'  -> scan_aux input (pos+1) (Token.Tok_Add::tokens)
-        | '-'  -> scan_aux input (pos+1) (Token.Tok_Sub::tokens)
-        | '*'  -> scan_aux input (pos+1) (Token.Tok_Mul::tokens)
-        | '/'  -> scan_aux input (pos+1) (Token.Tok_Div::tokens)
-        | ';'  -> scan_aux input (pos+1) (Token.Tok_Semi::tokens)
+        | '+'  -> scan_aux input (pos+1) (Token.Add::tokens)
+        | '-'  -> scan_aux input (pos+1) (Token.Sub::tokens)
+        | '*'  -> scan_aux input (pos+1) (Token.Mul::tokens)
+        | '/'  -> scan_aux input (pos+1) (Token.Div::tokens)
+        | ';'  -> scan_aux input (pos+1) (Token.Semi::tokens)
         | '>'  ->
            if input.[pos+1] = '=' then
-             scan_aux input (pos+2) (Token.Tok_GreaterEqual::tokens)
+             scan_aux input (pos+2) (Token.GreaterEqual::tokens)
            else
-             scan_aux input (pos+1) (Token.Tok_Greater::tokens)
+             scan_aux input (pos+1) (Token.Greater::tokens)
         | '<'  ->
            if input.[pos+1] = '=' then
-             scan_aux input (pos+2) (Token.Tok_LessEqual::tokens)
+             scan_aux input (pos+2) (Token.LessEqual::tokens)
            else
-             scan_aux input (pos+1) (Token.Tok_Less::tokens)
+             scan_aux input (pos+1) (Token.Less::tokens)
         | '!'  ->
            if input.[pos+1] = '=' then
-             scan_aux input (pos+2) (Token.Tok_NotEqual::tokens)
+             scan_aux input (pos+2) (Token.NotEqual::tokens)
            else
              failwith "Unary not yet implemented"
         | '=' ->
            if input.[pos+1] = '=' then
-             scan_aux input (pos+2) (Token.Tok_EqualEqual::tokens)
+             scan_aux input (pos+2) (Token.EqualEqual::tokens)
            else
-             scan_aux input (pos+1) (Token.Tok_Equal::tokens)
+             scan_aux input (pos+1) (Token.Equal::tokens)
         | '\"' ->
            let str = parse_str input (pos+1) in
-           scan_aux input (pos+2 + String.length str) (Token.Tok_Str (str)::tokens)
+           scan_aux input (pos+2 + String.length str) (Token.Str (str)::tokens)
         | _ ->
            scan_aux input (pos+1) tokens
   in
@@ -48,15 +48,15 @@ let rec scan input =
 
 and keyword s =
   match s with
-  | "print" -> Token.Tok_Print s
-  | "var"   -> Token.Tok_Var
-  | "false" -> Token.Tok_Bool false
-  | "true"  -> Token.Tok_Bool true
-  | "if"    -> Token.Tok_If
-  | "end"   -> Token.Tok_End
-  | "do"    -> Token.Tok_Do
-  | "else"  -> Token.Tok_Else
-  | _       -> Token.Tok_Id s
+  | "print" -> Token.Print s
+  | "var"   -> Token.Var
+  | "false" -> Token.Bool false
+  | "true"  -> Token.Bool true
+  | "if"    -> Token.If
+  | "end"   -> Token.End
+  | "do"    -> Token.Do
+  | "else"  -> Token.Else
+  | _       -> Token.Id s
 
 and is_digit char = let code = Char.code char in
                     code >= Char.code '0' && code <= Char.code '9'
