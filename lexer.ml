@@ -39,8 +39,11 @@ let rec scan input =
            else
              scan_aux input (pos+1) (Token.Equal::tokens)
         | '\"' ->
-           let str = parse_str input (pos+1) in
-           scan_aux input (pos+2 + String.length str) (Token.Str (str)::tokens)
+           if input.[pos+1] = '\"' then
+             scan_aux input (pos+2) (Token.Str ("")::tokens)
+           else
+             let str = parse_str input (pos+1) in
+             scan_aux input (pos+2 + String.length str) (Token.Str (str)::tokens)
         | _ ->
            scan_aux input (pos+1) tokens
   in
@@ -85,10 +88,10 @@ and get_digit str pos =
   get_digit' 0
 
 and parse_str str pos =
-  let rec parse_str' i acc =
-    if str.[i] = '\"' then
-      acc
+  let rec parse_str' i =
+    if str.[pos+i] = '\"' then
+      String.sub str pos i
     else
-      parse_str' (i + 1) (acc ^ String.make 1 str.[i])
+      parse_str' (i + 1)
   in
-  parse_str' pos ""
+  parse_str' 0
