@@ -2,9 +2,18 @@ open Format
 
 exception RuntimeError of string
 
-let rec eval_expr (env: Env.t) (ast: Ast.expr) : Ast.value =
+let rec eval_expr (env: Ast.env) (ast: Ast.expr) : Ast.value =
   let eval_expr' expr = eval_expr env expr in
   match ast with
+
+  | Call (callee, params) ->
+     let args = List.map eval_expr' params in
+     begin match eval_expr' callee with
+     | Ast.Callable (_name, fn) ->
+        fn args
+     | _ ->
+        failwith("not a function")
+     end
   | Sum (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
      | Int x, Int y -> Int (x + y)
@@ -43,8 +52,12 @@ let rec eval_expr (env: Env.t) (ast: Ast.expr) : Ast.value =
   | Equal (expr1, expr2) ->
      Bool (eval_equal (eval_expr' expr2) (eval_expr' expr2))
   | Id name   ->
-     Env.lookup env name
+     Ast.lookup env name
   | Value v ->
+     v
+  | Assign (s, e) ->
+     let v = eval_expr env e in
+     Ast.replace env s v;
      v
 
 and truthy (x : Ast.value) : bool =
@@ -52,6 +65,8 @@ and truthy (x : Ast.value) : bool =
   | Bool b -> b
   | Int  i -> if i > 0 then true else false
   | String _ -> false
+  | Null -> false
+  | Callable (_,_) -> false
 
 and eval_relation (op : 'a) (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
@@ -70,41 +85,49 @@ and eval_equal (v1 : Ast.value) (v2 : Ast.value) : bool =
      (truthy v1) == (truthy v2)
 
 and eval_not_equal v1 v2 =
-  match v1, v2 with
+   match v1, v2 with
   | Int x, Int y ->
      x != y
   | String x, String y ->
      x != y
   |  _ ->
-     truthy v1 == truthy v2
+      truthy v1 = truthy v2
 
+let rec eval (statements: Ast.stmt list) : unit =
+  let env = Ast.make None in
+  List.iter (eval_stmt env) statements
 
-let rec eval_stmt (env: Env.t) (s: Ast.stmt) : unit =
+and eval_stmt (env: Ast.env) (s: Ast.stmt) : unit =
   match s with
   | Print e ->
      begin match eval_expr env e with
      | Int x    -> printf "%d\n" x
      | Bool x   -> printf "%B\n" x
      | String x -> printf "%s\n" x
+     | Null     -> printf "null\n"
+     | Callable (x,_ )-> printf "function: %s\n" x
      end
   | Declaration (s, e) ->
      let x = eval_expr env e in
-     Env.add env s x
-  | Assign (s, e) ->
-     Env.replace env s (eval_expr env e)
+     Ast.add env s x
   | If (expr, if_stmt, else_stmt) ->
      begin match eval_expr env expr with
      | Bool s ->
-        let inner = Env.make (Some env) in
+        let inner = Ast.make (Some env) in
         if s then List.iter (eval_stmt inner) if_stmt
         else List.iter (eval_stmt inner) else_stmt
      | _ ->
         raise (RuntimeError ("cannot compar"));
      end
-
-let eval (statements: Ast.stmt list) : unit =
-  let env = Env.make None in
-  List.iter (eval_stmt env) statements
+  | Function (name, params, stmts) ->
+     let fn args = (
+         List.iter2 (Ast.add env) params args;
+         List.iter (eval_stmt env) stmts;
+         Ast.Null
+       ) in
+     Ast.add env name (Ast.Callable (name, fn))
+  | ExprStmt (expr) ->
+     ignore (eval_expr env expr)
 
 let read_file filename =
   let ch = open_in filename in
@@ -121,5 +144,5 @@ let () =
     with
     | RuntimeError s ->
        printf "RuntimeError: %s\n" s
-    | Env.NotfoundError s ->
-     printf "NotfoundError: %s\n" s
+    | Ast.NotfoundError s ->
+       printf "NotfoundError: %s\n" s

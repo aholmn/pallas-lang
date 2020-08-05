@@ -2,68 +2,111 @@ let tokens = ref []
 
 exception InvalidExpression of string
 
-let peek () =
-  match !tokens with
-  | hd::_tl -> hd
-  | []     -> raise (InvalidExpression "no tokens left to parse")
+let rec parse (ts: Token.token list) : Ast.stmt list =
+  tokens := ts;
+  parse_program []
 
-let consume token =
-  match !tokens with
-  | hd::tl -> if hd = token then tokens := tl
-              else
-                raise (InvalidExpression
-                         (Format.sprintf "expected %s but got %s"
-                            (Token.token_to_str token) (Token.token_to_str hd)))
-  | [] ->
-     raise (InvalidExpression "no tokens left to consume")
+and  parse_program acc =
+  match peek () = Token.Eof with
+  | true ->
+     List.rev acc
+  | false ->
+     let stmt =  parse_statement () in
+     parse_program(stmt::acc)
 
-let parse_primary () =
-  let token = peek () in
+and parse_statement () =
+  let token = peek() in
   match token with
-  | Token.Num value ->
+  | Token.Print ->
      consume token;
-     Ast.Value (Int value)
-  | Token.Bool value ->
-     consume token;
-     Ast.Value (Bool value)
-  | Token.Id value ->
-     consume token;
-     Ast.Id value
-  | Token.Str value ->
-     consume token;
-     Ast.Value (String value)
+     let expr = parse_expression () in
+     consume Token.Semi;
+     Ast.Print expr
+  | Token.Var ->
+     parse_var_statement ()
+  | Token.If ->
+     parse_if_statement ()
+  | Token.Def ->
+     parse_def_statement ()
   | _ ->
+     let expr = parse_expression () in
+     consume Token.Semi;
+     Ast.ExprStmt (expr);
+
+and parse_var_statement () =
+  consume Token.Var;
+  let next_token = peek () in
+  match next_token with
+  | Token.Id id ->
+     consume next_token;
+     consume Token.Equal;
+     let expr = parse_expression () in
+     consume Token.Semi;
+     Ast.Declaration (id, expr)
+  | token ->
      raise (InvalidExpression
-              (Format.sprintf "expected value but got %s" (Token.token_to_str token)))
+              (Format.sprintf
+                 "expected variable name after var but got %s"
+                 (Token.str token)))
 
-let rec parse_multiplication () =
-  let left  = parse_primary () in
-  let token = peek () in
-  match token with
-  | Token.Mul ->
-     consume token;
-     Ast.Prod (left, parse_multiplication ())
-  | Token.Div ->
-     consume token;
-     Ast.Frac (left, parse_multiplication ())
-  | _ ->
-     left
+and parse_if_statement () =
+  consume Token.If;
+  let expr = parse_expression () in
+  consume Token.Do;
+  let if_stmts = parse_statements_until [Token.End; Token.Else] [] in
+  let else_stmts = match peek () with
+    | Token.Else ->
+       consume Token.Else;
+       let s = parse_statements_until [Token.End] [] in
+       consume Token.End;
+       s
+    | Token.End ->
+       consume Token.End;
+       []
+    | token ->
+       raise (InvalidExpression
+                (Format.sprintf "expected end but got %s" (Token.str token)))
+  in
+  Ast.If (expr, if_stmts, else_stmts)
 
+and parse_def_statement () =
+  consume Token.Def;
+  let next = peek () in
+  begin match next with
+  | Token.Id name ->
+     consume next;
+     consume Token.LeftParen;
+     let args = parse_params [] in
+     consume Token.RightParen;
+     consume Token.Do;
+     let stmts = parse_statements_until [Token.End] [] in
+     consume Token.End;
+     Ast.Function (name, args, stmts)
+  | token ->
+     raise (InvalidExpression
+              (Format.sprintf
+                 "expected function name after def but got end but got %s"
+                 (Token.str token)))
+  end
 
-let rec parse_addition () =
-  let left = parse_multiplication () in
-  let token = peek () in
-  match token with
-  | Token.Add ->
-     consume token;
-     Ast.Sum (left, parse_addition ())
-  | Token.Sub ->
-     consume token;
-     Ast.Diff (left, parse_addition ())
-  | _ ->
-     left
+and parse_expression () =
+  parse_assignment ()
 
-let rec parse_comparison () =
+and parse_assignment () =
+  let comparison = parse_comparison () in
+  match peek () = Token.Equal with
+  | true ->
+     consume Token.Equal;
+     begin match comparison with
+     | Ast.Id id ->
+        Ast.Assign (id, parse_comparison ())
+     | _ ->
+        raise (InvalidExpression "invalid assignment target")
+     end
+  | false ->
+     comparison
+
+and parse_comparison () =
   let left = parse_addition () in
   let token = peek () in
   match token with
@@ -88,72 +131,115 @@ let rec parse_comparison () =
   | _ ->
      left
 
-let rec parse_statement () =
-  let token = peek() in
+and parse_addition () =
+  let left = parse_multiplication () in
+  let token = peek () in
   match token with
-  | Token.Print _ ->
+  | Token.Add ->
      consume token;
-     let expr = parse_comparison () in
-     consume Token.Semi;
-     Ast.Print expr
-  | Token.Id str ->
+     Ast.Sum (left, parse_addition ())
+  | Token.Sub ->
      consume token;
-     consume Token.Equal;
-     let expr = parse_comparison () in
-     consume Token.Semi;
-     Ast.Assign (str, expr)
-  | Token.Var ->
-     consume token;
-     let next_token = peek () in
-     begin match next_token with
-     | Token.Id str ->
-        consume next_token;
-        consume Token.Equal;
-        let expr = parse_comparison () in
-        consume Token.Semi;
-        Ast.Declaration (str, expr)
-     | _ ->
-        raise (InvalidExpression "expected variable name after var")
-     end
-  | Token.If ->
-     consume token;
-     let expr, if_stmts, else_stmts = parse_if_statement () in
-     Ast.If (expr, if_stmts, else_stmts)
+     Ast.Diff (left, parse_addition ())
   | _ ->
-     raise (InvalidExpression "invalid statement")
+     left
 
-and parse_if_statement () =
-  let expr = parse_comparison () in
-     consume Token.Do;
-     let if_stmts = parse_statements_until [Token.End; Token.Else] [] in
-     let else_stmts = match peek () with
-       | Token.Else ->
-          consume Token.Else;
-          let s = parse_statements_until [Token.End] [] in
-          consume Token.End;
-          s
-       | Token.End ->
-          consume Token.End;
-          []
-       | token ->
-          raise (InvalidExpression
-                   (Format.sprintf "expected end but got %s" (Token.token_to_str token)))
-     in
-     (expr, if_stmts, else_stmts)
+and parse_multiplication () =
+  let left  = parse_call () in
+  let token = peek () in
+  match token with
+  | Token.Mul ->
+     consume token;
+     Ast.Prod (left, parse_multiplication ())
+  | Token.Div ->
+     consume token;
+     Ast.Frac (left, parse_multiplication ())
+  | _ ->
+     left
+
+and parse_call () =
+  let p = parse_primary () in
+  match peek() with
+  | Token.LeftParen ->
+     consume Token.LeftParen;
+     let args = call_aux [] in
+     consume Token.RightParen;
+     Ast.Call (p, args)
+  | t ->
+     p
+
+and parse_primary () =
+  let token = peek () in
+  match token with
+  | Token.Num value ->
+     consume token;
+     Ast.Value (Int value)
+  | Token.Bool value ->
+     consume token;
+     Ast.Value (Bool value)
+  | Token.Id value ->
+     consume token;
+     Ast.Id value
+  | Token.Str value ->
+     consume token;
+     Ast.Value (String value)
+  | _ ->
+     raise (InvalidExpression
+              (Format.sprintf "expected value but got %s" (Token.str token)))
+
+and call_aux args =
+  match peek () = Token.RightParen with
+  | true ->
+     List.rev args
+  | false ->
+     begin match args with
+     | [] ->
+        let expr = parse_expression () in
+        call_aux (expr::args)
+     | _::_ ->
+        consume Token.Comma;
+        let expr = parse_expression () in
+        call_aux (expr::args)
+     end
+
+and parse_params params =
+  match peek () = Token.RightParen with
+  | true ->
+     List.rev params
+  | false ->
+     begin match params with
+     | [] ->
+        let p = get_param () in
+        parse_params (p::params)
+     | _::_ ->
+        consume Token.Comma;
+        let p = get_param () in
+        parse_params (p::params)
+     end
+
+and get_param () =
+  let primary = parse_primary () in
+  match primary with
+  | Ast.Id id -> id
+  | _ ->
+     raise (InvalidExpression
+              "invalid params in function definition")
 
 and parse_statements_until tokens acc =
   if List.mem (peek ()) tokens then List.rev acc
   else parse_statements_until tokens (parse_statement ()::acc)
 
-let rec parse_program acc =
-  let token = peek () in
-  match token with
-  | Token.Eof ->
-     List.rev acc
-  | _ ->
-     let statement =  parse_statement () in
-     parse_program(statement::acc)
+and peek () =
+  match !tokens with
+  | hd::_tl -> hd
+  | []     -> raise (InvalidExpression "no tokens left to parse")
 
-let parse (ts: Token.token list) : Ast.stmt list =
-  tokens := ts;
-  parse_program []
+and consume token =
+  match !tokens with
+  | hd::tl -> if hd = token then tokens := tl
+              else
+                raise (InvalidExpression
+                         (Format.sprintf "expected %s but got %s"
+                            (Token.str token) (Token.str hd)))
+  | [] ->
+     raise (InvalidExpression "no tokens left to consume")

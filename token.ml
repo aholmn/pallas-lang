@@ -1,9 +1,9 @@
 type token =
-  | Print of string
   | Str   of string
   | Num   of int
   | Bool  of bool
   | Id    of string
+  | Print
   | Div
   | Mul
   | Add
@@ -22,9 +22,13 @@ type token =
   | End
   | Do
   | Else
+  | LeftParen
+  | RightParen
+  | Comma
+  | Def
 
-let token_to_str = function
-  | Print s      -> s
+let str = function
+  | Print        -> "print"
   | Str s        -> s
   | Num l        -> string_of_int l
   | Div          -> "/"
@@ -45,8 +49,12 @@ let token_to_str = function
   | Bool s       ->  string_of_bool s
   | End          -> "end"
   | If           -> "if"
-  | Do           -> "do";
+  | Do           -> "do"
   | Else         -> "else"
+  | LeftParen    -> "("
+  | RightParen   -> ")"
+  | Comma        -> ","
+  | Def          -> "def"
 
 (* let print_token t =
  *   match t with
