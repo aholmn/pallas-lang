@@ -27,7 +27,7 @@ and stmt =
   | If of expr * stmt list * stmt list
   | Function of string * string list * stmt list
   | ExprStmt of expr
-
+  | Return of expr option
 
 exception NotfoundError of string
 

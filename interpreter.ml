@@ -1,16 +1,20 @@
 open Format
 
 exception RuntimeError of string
+exception ReturnException of Ast.value
 
 let rec eval_expr (env: Ast.env) (ast: Ast.expr) : Ast.value =
   let eval_expr' expr = eval_expr env expr in
   match ast with
-
   | Call (callee, params) ->
      let args = List.map eval_expr' params in
      begin match eval_expr' callee with
      | Ast.Callable (_name, fn) ->
-        fn args
+        begin try
+            fn args
+          with ReturnException return_value ->
+            return_value
+        end
      | _ ->
         failwith("not a function")
      end
@@ -126,8 +130,17 @@ and eval_stmt (env: Ast.env) (s: Ast.stmt) : unit =
          Ast.Null
        ) in
      Ast.add env name (Ast.Callable (name, fn))
-  | ExprStmt (expr) ->
+  | ExprStmt expr ->
      ignore (eval_expr env expr)
+  | Return value ->
+     begin match value with
+     | None ->
+       raise (ReturnException Ast.Null)
+     | Some expr ->
+        let value = eval_expr env expr in
+        raise (ReturnException value)
+     end
+
 
 let read_file filename =
   let ch = open_in filename in

@@ -28,10 +28,24 @@ and parse_statement () =
      parse_if_statement ()
   | Token.Def ->
      parse_def_statement ()
+  | Token.Return ->
+     parse_return_statement ()
   | _ ->
      let expr = parse_expression () in
      consume Token.Semi;
      Ast.ExprStmt (expr);
+
+and parse_return_statement () =
+  consume Token.Return;
+  let value = match peek () = Token.Semi with
+  | true ->
+     None
+  | false ->
+     Some (parse_expression ())
+  in
+  consume Token.Semi;
+  Ast.Return (value)
+
 
 and parse_var_statement () =
   consume Token.Var;
