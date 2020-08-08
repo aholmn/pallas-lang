@@ -1,0 +1,16 @@
+def fib(n) do
+    if n <= 1 do
+       return n;
+    end
+    return fib(n-2) + fib(n-1);
+end
+
+def fibRec(n) do
+    if n < 0 do
+       return;
+    end
+    print fib(n);
+    fibRec(n-1);
+end
+
+fibRec(10);

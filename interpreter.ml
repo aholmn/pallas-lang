@@ -54,7 +54,7 @@ let rec eval_expr (env: Ast.env) (ast: Ast.expr) : Ast.value =
   | NotEqual (expr1, expr2) ->
      Bool (eval_not_equal (eval_expr' expr1) (eval_expr' expr2))
   | Equal (expr1, expr2) ->
-     Bool (eval_equal (eval_expr' expr2) (eval_expr' expr2))
+     Bool (eval_equal (eval_expr' expr1) (eval_expr' expr2))
   | Id name   ->
      Ast.lookup env name
   | Value v ->
@@ -82,9 +82,9 @@ and eval_relation (op : 'a) (v1 : Ast.value) (v2 : Ast.value) : bool =
 and eval_equal (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
   | String s1, String s2 ->
-     s1 == s2
+     s1 = s2
   | Int i1, Int i2 ->
-     i1 == i2
+     i1 = i2
   |  _ ->
      (truthy v1) == (truthy v2)
 
@@ -125,8 +125,9 @@ and eval_stmt (env: Ast.env) (s: Ast.stmt) : unit =
      end
   | Function (name, params, stmts) ->
      let fn args = (
-         List.iter2 (Ast.add env) params args;
-         List.iter (eval_stmt env) stmts;
+         let closure = Ast.make (Some env) in
+         List.iter2 (Ast.add closure) params args;
+         List.iter (eval_stmt closure) stmts;
          Ast.Null
        ) in
      Ast.add env name (Ast.Callable (name, fn))
