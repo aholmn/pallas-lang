@@ -99,9 +99,20 @@ and eval_not_equal v1 v2 =
 
 let rec eval (statements: Ast.stmt list) : unit =
   let env = Ast.make None in
-  List.iter (eval_stmt env) statements
+  eval_list_of_stmts  statements env
 
-and eval_stmt (env: Ast.env) (s: Ast.stmt) : unit =
+and eval_list_of_stmts stmts env =
+  match stmts with
+  | stmt::t ->
+     eval_list_of_stmts t (eval_stmt env stmt)
+  | [] ->
+     ()
+
+(* Evaluates a statement and returns an environment.
+   If the statment is a ’Declaration’ a new environment is created, with the
+   the input environment as its parent, and returned.
+ *)
+and eval_stmt (env: Ast.env) (s: Ast.stmt) : Ast.env =
   match s with
   | Print e ->
      begin match eval_expr env e with
@@ -110,33 +121,39 @@ and eval_stmt (env: Ast.env) (s: Ast.stmt) : unit =
      | String x -> printf "%s\n" x
      | Null     -> printf "null\n"
      | Callable (x,_ )-> printf "function: %s\n" x
-     end
+     end;
+    env
   | Declaration (s, e) ->
      let x = eval_expr env e in
-     Ast.add env s x
+     let inner = Ast.make (Some env) in
+     Ast.add inner s x;
+     inner
   | If (expr, if_stmt, else_stmt) ->
      begin match eval_expr env expr with
      | Bool s ->
         let inner = Ast.make (Some env) in
-        if s then List.iter (eval_stmt inner) if_stmt
-        else List.iter (eval_stmt inner) else_stmt
+        if s then eval_list_of_stmts if_stmt inner
+        else eval_list_of_stmts else_stmt inner
      | _ ->
         raise (RuntimeError ("cannot compar"));
-     end
+     end;
+     env
   | Function (name, params, stmts) ->
      let fn args = (
          let closure = Ast.make (Some env) in
          List.iter2 (Ast.add closure) params args;
-         List.iter (eval_stmt closure) stmts;
+         eval_list_of_stmts stmts closure;
          Ast.Null
        ) in
-     Ast.add env name (Ast.Callable (name, fn))
+     Ast.add env name (Ast.Callable (name, fn));
+     env
   | ExprStmt expr ->
-     ignore (eval_expr env expr)
+     ignore (eval_expr env expr);
+     env
   | Return value ->
      begin match value with
      | None ->
-       raise (ReturnException Ast.Null)
+        raise (ReturnException Ast.Null)
      | Some expr ->
         let value = eval_expr env expr in
         raise (ReturnException value)
