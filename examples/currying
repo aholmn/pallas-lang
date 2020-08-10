@@ -1,0 +1,14 @@
+def first(a) do
+    def second(b) do
+        def third(c) do
+            print a;
+            print b;
+            print c;
+        end
+        return third;
+    end
+
+    return second;
+end
+
+first("hello")("world")("!");

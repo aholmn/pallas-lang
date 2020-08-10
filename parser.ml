@@ -176,9 +176,9 @@ and parse_call () =
   match peek() with
   | Token.LeftParen ->
      consume Token.LeftParen;
-     let args = call_aux [] in
+     let args = parse_arguments [] in
      consume Token.RightParen;
-     Ast.Call (p, args)
+     finnish_call (Ast.Call (p, args))
   | t ->
      p
 
@@ -201,19 +201,29 @@ and parse_primary () =
      raise (InvalidExpression
               (Format.sprintf "expected value but got %s" (Token.str token)))
 
-and call_aux args =
+and finnish_call callee =
+  match peek () = Token.LeftParen with
+  | true ->
+     consume Token.LeftParen;
+     let args = parse_arguments [] in
+     consume Token.RightParen;
+     finnish_call (Ast.Call (callee, args))
+  | false ->
+     callee
+
+and parse_arguments acc =
   match peek () = Token.RightParen with
   | true ->
-     List.rev args
+     List.rev acc
   | false ->
-     begin match args with
+     begin match acc with
      | [] ->
         let expr = parse_expression () in
-        call_aux (expr::args)
+        parse_arguments (expr::acc)
      | _::_ ->
         consume Token.Comma;
         let expr = parse_expression () in
-        call_aux (expr::args)
+        parse_arguments (expr::acc)
      end
 
 and parse_params params =
