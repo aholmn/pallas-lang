@@ -1,5 +1,8 @@
 .DS_STORE
-pallas
+/_build
+.merlin
+bin/.merlin
+lib/.merlin
 *~
 #*
 .#*

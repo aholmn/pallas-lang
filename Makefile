@@ -1,18 +1,13 @@
 make all: build run
 
+.PHONY: build
 build:
-	ocamlopt -c token.ml
-	ocamlopt -c lexer.ml
-	ocamlopt -c ast.ml
-	ocamlopt -c parser.ml
-	ocamlopt -c interpreter.ml
-	ocamlopt -o interpreter ast.cmx str.cmxa lexer.cmx token.cmx parser.cmx interpreter.cmx
+	dune build
 run:
-	./interpreter examples/variable.psc
+	dune exec pallas examples/fibonacci
 
 clean:
-	rm -f *.cmx
-	rm -f *.cmo
-	rm -f *.cmi
-	rm -f *.o
-	rm -f interpreter
+	rm -rf _build
+
+install: build
+	cp _build/install/default/bin/pallas /usr/local/bin/pallas

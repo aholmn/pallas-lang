@@ -179,7 +179,7 @@ and parse_call () =
      let args = parse_arguments [] in
      consume Token.RightParen;
      finnish_call (Ast.Call (p, args))
-  | t ->
+  | _ ->
      p
 
 and parse_primary () =

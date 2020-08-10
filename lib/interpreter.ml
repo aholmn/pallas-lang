@@ -166,7 +166,7 @@ let read_file filename =
   close_in ch;
   s
 
-let () =
+let interpreter =
   try
     let program = read_file Sys.argv.(1)  in
     let tokens = Lexer.scan program in
