@@ -159,16 +159,15 @@ and eval_stmt (env: Ast.env) (s: Ast.stmt) : Ast.env =
         raise (ReturnException value)
      end
 
-
 let read_file filename =
   let ch = open_in filename in
   let s = really_input_string ch (in_channel_length ch) in
   close_in ch;
   s
 
-let interpreter =
+let interpreter file =
   try
-    let program = read_file Sys.argv.(1)  in
+    let program = read_file file in
     let tokens = Lexer.scan program in
     let statements = Parser.parse tokens in
     eval(statements)

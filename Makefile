@@ -6,6 +6,10 @@ build:
 run:
 	dune exec pallas examples/fibonacci
 
+.PHONY: test
+test: build
+	dune build @install @runtest
+
 clean:
 	rm -rf _build
 
