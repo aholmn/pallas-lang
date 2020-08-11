@@ -17,11 +17,6 @@ and  parse_program acc =
 and parse_statement () =
   let token = peek() in
   match token with
-  | Token.Print ->
-     consume token;
-     let expr = parse_expression () in
-     consume Token.Semi;
-     Ast.Print expr
   | Token.Var ->
      parse_var_statement ()
   | Token.If ->

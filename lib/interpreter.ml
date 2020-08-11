@@ -1,9 +1,9 @@
 open Format
+open Pallas_exn
 
-exception RuntimeError of string
 exception ReturnException of Ast.value
 
-let rec eval_expr (env: Ast.env) (ast: Ast.expr) : Ast.value =
+let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
   let eval_expr' expr = eval_expr env expr in
   match ast with
   | Call (callee, params) ->
@@ -56,12 +56,12 @@ let rec eval_expr (env: Ast.env) (ast: Ast.expr) : Ast.value =
   | Equal (expr1, expr2) ->
      Bool (eval_equal (eval_expr' expr1) (eval_expr' expr2))
   | Id name   ->
-     Ast.lookup env name
+     Env.lookup env name
   | Value v ->
      v
   | Assign (s, e) ->
      let v = eval_expr env e in
-     Ast.replace env s v;
+     Env.replace env s v;
      v
 
 and truthy (x : Ast.value) : bool =
@@ -97,14 +97,10 @@ and eval_not_equal v1 v2 =
   |  _ ->
       truthy v1 = truthy v2
 
-let rec eval (statements: Ast.stmt list) : unit =
-  let env = Ast.make None in
-  eval_list_of_stmts  statements env
-
-and eval_list_of_stmts stmts env =
+and eval stmts env =
   match stmts with
   | stmt::t ->
-     eval_list_of_stmts t (eval_stmt env stmt)
+     eval t (eval_stmt env stmt)
   | [] ->
      ()
 
@@ -112,40 +108,31 @@ and eval_list_of_stmts stmts env =
    If the statment is a ’Declaration’ a new environment is created, with the
    the input environment as its parent, and returned.
  *)
-and eval_stmt (env: Ast.env) (s: Ast.stmt) : Ast.env =
+and eval_stmt (env: Env.env) (s: Ast.stmt) : Env.env =
   match s with
-  | Print e ->
-     begin match eval_expr env e with
-     | Int x    -> printf "%d\n" x
-     | Bool x   -> printf "%B\n" x
-     | String x -> printf "%s\n" x
-     | Null     -> printf "null\n"
-     | Callable (x,_ )-> printf "function: %s\n" x
-     end;
-    env
   | Declaration (s, e) ->
      let x = eval_expr env e in
-     let inner = Ast.make (Some env) in
-     Ast.add inner s x;
+     let inner = Env.make (Some env) in
+     Env.add inner s x;
      inner
   | If (expr, if_stmt, else_stmt) ->
      begin match eval_expr env expr with
      | Bool s ->
-        let inner = Ast.make (Some env) in
-        if s then eval_list_of_stmts if_stmt inner
-        else eval_list_of_stmts else_stmt inner
+        let inner = Env.make (Some env) in
+        if s then eval if_stmt inner
+        else eval else_stmt inner
      | _ ->
         raise (RuntimeError ("cannot compar"));
      end;
      env
   | Function (name, params, stmts) ->
      let fn args = (
-         let closure = Ast.make (Some env) in
-         List.iter2 (Ast.add closure) params args;
-         eval_list_of_stmts stmts closure;
+         let closure = Env.make (Some env) in
+         List.iter2 (Env.add closure) params args;
+         eval stmts closure;
          Ast.Null
        ) in
-     Ast.add env name (Ast.Callable (name, fn));
+     Env.add env name (Ast.Callable (name, fn));
      env
   | ExprStmt expr ->
      ignore (eval_expr env expr);
@@ -170,9 +157,11 @@ let interpreter file =
     let program = read_file file in
     let tokens = Lexer.scan program in
     let statements = Parser.parse tokens in
-    eval(statements)
+    let env = Env.make None in
+    Env.add env "println" Builtin.println;
+    eval statements env
     with
     | RuntimeError s ->
        printf "RuntimeError: %s\n" s
-    | Ast.NotfoundError s ->
+    | Env.NotfoundError s ->
        printf "NotfoundError: %s\n" s

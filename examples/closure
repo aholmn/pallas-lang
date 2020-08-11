@@ -4,7 +4,7 @@ def makeCounter() do
     var i = 0;
     def count() do
         i = i + 1;
-        print i;
+        println(i);
     end
 
     return count;

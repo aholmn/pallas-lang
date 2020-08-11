@@ -3,7 +3,6 @@ type token =
   | Num   of int
   | Bool  of bool
   | Id    of string
-  | Print
   | Div
   | Mul
   | Add
@@ -29,7 +28,6 @@ type token =
   | Return
 
 let str = function
-  | Print        -> "print"
   | Str s        -> s
   | Num l        -> string_of_int l
   | Div          -> "/"

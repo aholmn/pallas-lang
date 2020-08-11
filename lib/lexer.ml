@@ -57,7 +57,6 @@ let rec scan input =
 
 and keyword s =
   match s with
-  | "print"  -> Token.Print
   | "var"    -> Token.Var
   | "false"  -> Token.Bool false
   | "true"   -> Token.Bool true

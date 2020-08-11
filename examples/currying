@@ -1,9 +1,9 @@
 def first(a) do
     def second(b) do
         def third(c) do
-            print a;
-            print b;
-            print c;
+            println(a);
+            println(b);
+            println(c);
         end
         return third;
     end

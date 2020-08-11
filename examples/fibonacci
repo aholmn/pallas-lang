@@ -10,7 +10,7 @@ def fibRec(n) do
     if n < 0 do
        return;
     end
-    print fib(n);
+    println(fib(n));
     fibRec(n-1);
 end
 
