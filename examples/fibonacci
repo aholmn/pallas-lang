@@ -5,6 +5,7 @@ def fib(n) do
     return fib(n-2) + fib(n-1);
 end
 
+# prints the fibonacci sequence for n numbers
 def fibRec(n) do
     if n < 0 do
        return;

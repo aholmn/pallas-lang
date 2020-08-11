@@ -16,6 +16,9 @@ let rec scan input =
         | '+'  -> scan_aux (pos+1) (Token.Add::tokens)
         | '-'  -> scan_aux (pos+1) (Token.Sub::tokens)
         | '*'  -> scan_aux (pos+1) (Token.Mul::tokens)
+        | '#'  ->
+           let rec f = fun i -> if input.[i] = '\n' then i else f (i + 1) in
+           scan_aux (f pos) tokens
         | '/'  -> scan_aux (pos+1) (Token.Div::tokens)
         | ';'  -> scan_aux (pos+1) (Token.Semi::tokens)
         | '('  -> scan_aux (pos+1) (Token.LeftParen::tokens)
