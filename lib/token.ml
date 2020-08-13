@@ -1,6 +1,6 @@
 type token =
   | Str   of string
-  | Num   of int
+  | Num   of float
   | Bool  of bool
   | Id    of string
   | Div
@@ -29,7 +29,7 @@ type token =
 
 let str = function
   | Str s        -> s
-  | Num l        -> string_of_int l
+  | Num l        -> string_of_float l
   | Div          -> "/"
   | Mul          -> "*"
   | Add          -> "+"

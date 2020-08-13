@@ -20,26 +20,26 @@ let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
      end
   | Sum (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (x + y)
+     | Int x, Int y -> Int (Float.add x y)
      | String x, String y -> String (x ^ y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Diff (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (x - y)
+     | Int x, Int y -> Int (Float.sub x y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Frac (expr2, expr1) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (x / y)
+     | Int x, Int y -> Int (Float.div y x)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Prod (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (x * y)
+     | Int x, Int y -> Int (Float.mul x y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
@@ -67,7 +67,7 @@ let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
 and truthy (x : Ast.value) : bool =
   match x with
   | Bool b -> b
-  | Int  i -> if i > 0 then true else false
+  | Int  i -> if i > 0. then true else false
   | String _ -> false
   | Null -> false
   | Callable (_,_) -> false

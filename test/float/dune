@@ -1,0 +1,3 @@
+(test
+  (name float)
+  (libraries interpreter))

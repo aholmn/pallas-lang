@@ -1,0 +1,11 @@
+def printNumbers(i) do:
+    if i >= 10 do
+       return;
+    else
+        println(i);
+        return printNumbers(i+1);
+    end
+end
+
+printNumbers(1.0);
+printNumbers(1.12345);

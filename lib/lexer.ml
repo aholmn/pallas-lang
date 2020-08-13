@@ -91,9 +91,15 @@ and get_digit str pos =
     if pos+i < String.length str && is_digit str.[pos+i] then
       get_digit' (i + 1)
     else
-      (pos+i, int_of_string (String.sub str pos i))
+      i
   in
-  get_digit' 0
+  let index0 = get_digit' 0 in
+  match str.[pos+index0] = '.' with
+  | false ->
+      (pos+index0, float_of_string (String.sub str pos index0))
+  | true ->
+     let index1 = get_digit' (index0+1) in
+     (pos+index1, float_of_string (String.sub str pos index1))
 
 and parse_str str pos =
   let rec parse_str' i =

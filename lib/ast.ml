@@ -1,6 +1,6 @@
 type value =
   | Bool   of bool
-  | Int    of int
+  | Int    of float
   | String of string
   | Null
   | Callable of string * (value list -> value)
