@@ -1,0 +1,5 @@
+println([1]);
+println([1, 2]);
+println([1, 2, 3]);
+println([1, 1*2*3/6, "Strings is also supported", true]);
+println([1,3,4][3]);

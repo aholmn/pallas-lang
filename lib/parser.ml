@@ -99,7 +99,15 @@ and parse_def_statement () =
   end
 
 and parse_expression () =
-  parse_assignment ()
+  let left = parse_assignment () in
+  match peek () = Token.LeftBracket with
+  | true ->
+     consume Token.LeftBracket;
+     let right = parse_expression () in
+     consume Token.RightBracket;
+     Ast.IndexExpr (left, right)
+  | false ->
+     left
 
 and parse_assignment () =
   let comparison = parse_comparison () in
@@ -154,7 +162,7 @@ and parse_addition () =
      left
 
 and parse_multiplication () =
-  let left  = parse_call () in
+  let left  = parse_array () in
   let token = peek () in
   match token with
   | Token.Mul ->
@@ -168,14 +176,24 @@ and parse_multiplication () =
 
 and parse_call () =
   let p = parse_primary () in
-  match peek() with
+  match peek () with
   | Token.LeftParen ->
      consume Token.LeftParen;
-     let args = parse_arguments [] in
+     let args = parse_expr_list [] Token.RightParen in
      consume Token.RightParen;
      finnish_call (Ast.Call (p, args))
   | _ ->
      p
+
+and parse_array () =
+  match peek () = Token.LeftBracket with
+  | true ->
+     consume Token.LeftBracket;
+     let elements = parse_expr_list [] Token.RightBracket in
+     consume Token.RightBracket;
+     Ast.Array elements
+  | false ->
+     parse_call ()
 
 and parse_primary () =
   let token = peek () in
@@ -200,26 +218,25 @@ and finnish_call callee =
   match peek () = Token.LeftParen with
   | true ->
      consume Token.LeftParen;
-     let args = parse_arguments [] in
+     let args = parse_expr_list [] Token.RightParen in
      consume Token.RightParen;
      finnish_call (Ast.Call (callee, args))
   | false ->
      callee
 
-and parse_arguments acc =
-  match peek () = Token.RightParen with
+
+and parse_expr_list acc token =
+  match peek () = token with
   | true ->
      List.rev acc
   | false ->
-     begin match acc with
-     | [] ->
-        let expr = parse_expression () in
-        parse_arguments (expr::acc)
-     | _::_ ->
+     let expr = parse_expression () in
+     match Token.Comma = peek () with
+     | true ->
         consume Token.Comma;
-        let expr = parse_expression () in
-        parse_arguments (expr::acc)
-     end
+        parse_expr_list (expr::acc) token
+     | false ->
+        parse_expr_list (expr::acc) token
 
 and parse_params params =
   match peek () = Token.RightParen with

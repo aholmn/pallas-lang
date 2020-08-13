@@ -6,6 +6,10 @@ exception ReturnException of Ast.value
 let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
   let eval_expr' expr = eval_expr env expr in
   match ast with
+  | Array exprs ->
+     Values (List.map eval_expr' exprs)
+  | IndexExpr (left, right) ->
+     eval_index_expr (eval_expr' left) (eval_expr' right)
   | Call (callee, params) ->
      let args = List.map eval_expr' params in
      begin match eval_expr' callee with
@@ -16,6 +20,7 @@ let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
             return_value
         end
      | _ ->
+        (* TODO: Raise exception instead with better error message *)
         failwith("not a function")
      end
   | Sum (expr1, expr2) ->
@@ -64,6 +69,24 @@ let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
      Env.replace env s v;
      v
 
+and eval_index_expr left right =
+  match left with
+  | Values values ->
+     begin match right with
+     | Int i ->
+        let index = int_of_float i in
+        if index > (List.length values - 1) then
+          raise (RuntimeError "list index out of range")
+        else
+          List.nth values (int_of_float i)
+     | right_value ->
+        let str = Ast.value_to_str right_value in
+        raise (RuntimeError ("list indices must be number, not " ^ str))
+     end
+  | left_value->
+     let str = Ast.value_to_str left_value in
+     raise (RuntimeError ("index operator not supported for " ^ str))
+
 and truthy (x : Ast.value) : bool =
   match x with
   | Bool b -> b
@@ -71,6 +94,7 @@ and truthy (x : Ast.value) : bool =
   | String _ -> false
   | Null -> false
   | Callable (_,_) -> false
+  | Values _ -> false
 
 and eval_relation (op : 'a) (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
@@ -159,6 +183,7 @@ let interpreter file =
     let statements = Parser.parse tokens in
     let env = Env.make None in
     Env.add env "println" Builtin.println;
+    Env.add env "print" Builtin.print;
     eval statements env
     with
     | RuntimeError s ->

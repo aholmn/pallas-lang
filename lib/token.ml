@@ -26,17 +26,19 @@ type token =
   | Comma
   | Def
   | Return
+  | LeftBracket
+  | RightBracket
 
 let str = function
-  | Str s        -> s
-  | Num l        -> string_of_float l
+  | Str v        -> v
+  | Num v        -> string_of_float v
   | Div          -> "/"
   | Mul          -> "*"
   | Add          -> "+"
   | Sub          -> "-"
   | Eof          -> "eof"
   | Semi         -> ";"
-  | Id s         -> s
+  | Id v         -> v
   | Var          -> "var"
   | Equal        -> "="
   | EqualEqual   -> "=="
@@ -45,7 +47,7 @@ let str = function
   | NotEqual     -> "!="
   | Less         -> "<"
   | Greater      -> ">"
-  | Bool s       ->  string_of_bool s
+  | Bool v       ->  string_of_bool v
   | End          -> "end"
   | If           -> "if"
   | Do           -> "do"
@@ -55,3 +57,5 @@ let str = function
   | Comma        -> ","
   | Def          -> "def"
   | Return       -> "return"
+  | LeftBracket  -> "["
+  | RightBracket -> "]"

@@ -24,6 +24,8 @@ let rec scan input =
         | '('  -> scan_aux (pos+1) (Token.LeftParen::tokens)
         | ')'  -> scan_aux (pos+1) (Token.RightParen::tokens)
         | ','  -> scan_aux (pos+1) (Token.Comma::tokens)
+        | ']'  -> scan_aux (pos+1) (Token.RightBracket::tokens)
+        | '['  -> scan_aux (pos+1) (Token.LeftBracket::tokens)
         | '>'  ->
            if input.[pos+1] = '=' then
              scan_aux (pos+2) (Token.GreaterEqual::tokens)
@@ -73,7 +75,8 @@ and is_digit char = let code = Char.code char in
                     code >= Char.code '0' && code <= Char.code '9'
 
 and is_alpha char = let code = Char.code char in
-                    code >= Char.code 'A' && code <= Char.code 'z'
+                    (code >= Char.code 'A' && code <= Char.code 'Z') ||
+                    (code <= Char.code 'z' && code >= Char.code 'a')
 
 and is_alphanumerical char = is_digit char || is_alpha char
 
