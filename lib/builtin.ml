@@ -1,29 +1,43 @@
 open Pallas_exn
 
-let check_args name arity args =
-  let l = List.length args in
-  if l > arity then
-    raise (RuntimeError (Format.sprintf
-                           "%s expected %d arguments but got %d" name arity l))
-  else
-    None
+let function_factory f arity name =
+  let fn args =
+    let len = List.length args in
+    match len > arity with
+    | true ->
+       raise (RuntimeError (Format.sprintf "%s expected %d arguments but got %d" name arity len))
+    | false ->
+       f args;
+  in
+  Ast.Callable (name, fn)
 
 let print =
   let f args = (
-      ignore (check_args "println" 1 args);
       let value = List.nth args 0 in
       Format.printf "%s" (Ast.value_to_str value);
       Ast.Null
     )
   in
-  Ast.Callable ("print", f)
+  function_factory f 1 "println"
 
 let println =
   let f args = (
-      ignore (check_args "println" 1 args);
       let value = List.nth args 0 in
       Format.printf "%s\n" (Ast.value_to_str value);
       Ast.Null
     )
   in
-  Ast.Callable ("println", f)
+  function_factory f 1 "println"
+
+let length =
+  let f args =
+    let value = List.nth args 0 in
+    match value with
+    | Ast.Values values ->
+       Ast.Int (float_of_int (List.length values))
+    | Ast.String str ->
+       Ast.Int (float_of_int (String.length str))
+    | _ ->
+       raise (RuntimeError "length/1 is only supported on string or array")
+  in
+  function_factory f 1 "length"

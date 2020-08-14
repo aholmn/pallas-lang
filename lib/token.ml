@@ -28,6 +28,7 @@ type token =
   | Return
   | LeftBracket
   | RightBracket
+  | While
 
 let str = function
   | Str v        -> v
@@ -59,3 +60,4 @@ let str = function
   | Return       -> "return"
   | LeftBracket  -> "["
   | RightBracket -> "]"
+  | While        -> "while"

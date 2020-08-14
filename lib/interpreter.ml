@@ -161,6 +161,10 @@ and eval_stmt (env: Env.env) (s: Ast.stmt) : Env.env =
   | ExprStmt expr ->
      ignore (eval_expr env expr);
      env
+  | While (cond, stmts) ->
+     let closure = Env.make (Some env) in
+     eval_while closure cond stmts;
+     env
   | Return value ->
      begin match value with
      | None ->
@@ -170,11 +174,23 @@ and eval_stmt (env: Env.env) (s: Ast.stmt) : Env.env =
         raise (ReturnException value)
      end
 
+and eval_while env cond stmts =
+  match truthy (eval_expr env cond) with
+  | true ->
+     eval stmts env;
+     eval_while env cond stmts
+  | false -> ()
+
 let read_file filename =
   let ch = open_in filename in
   let s = really_input_string ch (in_channel_length ch) in
   close_in ch;
   s
+
+let add_builtins env =
+  Env.add env "println" Builtin.println;
+  Env.add env "print" Builtin.print;
+  Env.add env "length" Builtin.length
 
 let interpreter file =
   try
@@ -182,8 +198,7 @@ let interpreter file =
     let tokens = Lexer.scan program in
     let statements = Parser.parse tokens in
     let env = Env.make None in
-    Env.add env "println" Builtin.println;
-    Env.add env "print" Builtin.print;
+    add_builtins env;
     eval statements env
     with
     | RuntimeError s ->

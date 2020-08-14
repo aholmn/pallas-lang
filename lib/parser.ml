@@ -25,10 +25,20 @@ and parse_statement () =
      parse_def_statement ()
   | Token.Return ->
      parse_return_statement ()
+  | Token.While ->
+     parse_while_statement ()
   | _ ->
      let expr = parse_expression () in
      consume Token.Semi;
      Ast.ExprStmt (expr);
+
+and parse_while_statement () =
+  consume Token.While;
+  let condition = parse_expression () in
+  consume Token.Do;
+  let stmts = parse_statements_until [Token.End] [] in
+  consume Token.End;
+  Ast.While (condition, stmts)
 
 and parse_return_statement () =
   consume Token.Return;

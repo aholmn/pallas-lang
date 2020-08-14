@@ -68,6 +68,7 @@ and keyword s =
   | "else"   -> Token.Else
   | "def"    -> Token.Def
   | "return" -> Token.Return
+  | "while"  -> Token.While
   | _        -> Token.Id s
 
 
