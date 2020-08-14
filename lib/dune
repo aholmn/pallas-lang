@@ -1,2 +1,4 @@
 (library
+ (inline_tests)
+ (preprocess (pps ppx_expect))
  (public_name interpreter))

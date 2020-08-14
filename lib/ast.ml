@@ -61,3 +61,14 @@ and number_to_str f =
        convert (i + 1)
   in
   convert 0
+
+(* Tests *)
+let%test _ = "hello, world!" =  value_to_str (String "hello, world!")
+let%test _ = "0" =  value_to_str (Int 0.0)
+let%test _ = "1" =  value_to_str (Int 1.0)
+let%test _ = "1" =  value_to_str (Int 1.00)
+let%test _ = "1.1" =  value_to_str (Int 1.1)
+let%test _ = "1.25" =  value_to_str (Int 1.25)
+let%test _ = "[]" =  value_to_str (Values [])
+let%test _ = "[1]" =  value_to_str (Values [Int 1.])
+let%test _ = "[1, hello, true]" = value_to_str (Values [Int 1.; String "hello" ; Bool true])
