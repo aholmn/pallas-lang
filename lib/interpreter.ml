@@ -25,26 +25,26 @@ let rec eval_expr (env: Env.env) (ast: Ast.expr) : Ast.value =
      end
   | Sum (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (Float.add x y)
+     | Number x, Number y -> Number (Float.add x y)
      | String x, String y -> String (x ^ y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Diff (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (Float.sub x y)
+     | Number x, Number y -> Number (Float.sub x y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Frac (expr2, expr1) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (Float.div y x)
+     | Number x, Number y -> Number (Float.div y x)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
   | Prod (expr1, expr2) ->
      begin match eval_expr' expr1, eval_expr' expr2 with
-     | Int x, Int y -> Int (Float.mul x y)
+     | Number x, Number y -> Number (Float.mul x y)
      | _, _ ->
         raise (RuntimeError "Cannot eval expression")
      end
@@ -73,7 +73,7 @@ and eval_index_expr left right =
   match left with
   | Values values ->
      begin match right with
-     | Int i ->
+     | Number i ->
         let index = int_of_float i in
         if index > (List.length values - 1) then
           raise (RuntimeError "list index out of range")
@@ -87,10 +87,10 @@ and eval_index_expr left right =
      let str = Ast.value_to_str left_value in
      raise (RuntimeError ("index operator not supported for " ^ str))
 
-and truthy (x : Ast.value) : bool =
-  match x with
-  | Bool b -> b
-  | Int  i -> if i > 0. then true else false
+and truthy (value : Ast.value) : bool =
+  match value with
+  | Bool x -> x
+  | Number x -> if x > 0. then true else false
   | String _ -> false
   | Null -> false
   | Callable (_,_) -> false
@@ -98,23 +98,23 @@ and truthy (x : Ast.value) : bool =
 
 and eval_relation (op : 'a) (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
-  | Int i1, Int i2 ->
-     op i1 i2
+  | Number x, Number y ->
+     op x y
   | _ ->
      raise (RuntimeError "Cannot use '<' '<=' '>' '>=' on anything else than integers")
 
 and eval_equal (v1 : Ast.value) (v2 : Ast.value) : bool =
   match v1, v2 with
-  | String s1, String s2 ->
-     s1 = s2
-  | Int i1, Int i2 ->
-     i1 = i2
+  | String x, String y ->
+     x = y
+  | Number x, Number y ->
+     x = y
   |  _ ->
      (truthy v1) == (truthy v2)
 
 and eval_not_equal v1 v2 =
    match v1, v2 with
-  | Int x, Int y ->
+  | Number x, Number y ->
      x != y
   | String x, String y ->
      x != y

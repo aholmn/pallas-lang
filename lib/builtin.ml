@@ -34,9 +34,9 @@ let length =
     let value = List.nth args 0 in
     match value with
     | Ast.Values values ->
-       Ast.Int (float_of_int (List.length values))
+       Ast.Number (float_of_int (List.length values))
     | Ast.String str ->
-       Ast.Int (float_of_int (String.length str))
+       Ast.Number (float_of_int (String.length str))
     | _ ->
        raise (RuntimeError "length/1 is only supported on string or array")
   in

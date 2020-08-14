@@ -210,7 +210,7 @@ and parse_primary () =
   match token with
   | Token.Num value ->
      consume token;
-     Ast.Value (Int value)
+     Ast.Value (Number value)
   | Token.Bool value ->
      consume token;
      Ast.Value (Bool value)

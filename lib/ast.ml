@@ -1,6 +1,6 @@
 type value =
   | Bool   of bool
-  | Int    of float
+  | Number of float
   | String of string
   | Null
   | Callable of string * (value list -> value)
@@ -34,7 +34,7 @@ and stmt =
 
 let rec value_to_str = function
   | Bool v -> Format.sprintf "%B" v
-  | Int v -> number_to_str v
+  | Number v -> number_to_str v
   | String v -> v
   | Null -> "null"
   | Callable (v, _) -> Format.sprintf "function <%s>" v
@@ -65,11 +65,11 @@ and number_to_str f =
 
 (* Tests *)
 let%test _ = "hello, world!" =  value_to_str (String "hello, world!")
-let%test _ = "0" =  value_to_str (Int 0.0)
-let%test _ = "1" =  value_to_str (Int 1.0)
-let%test _ = "1" =  value_to_str (Int 1.00)
-let%test _ = "1.1" =  value_to_str (Int 1.1)
-let%test _ = "1.25" =  value_to_str (Int 1.25)
+let%test _ = "0" =  value_to_str (Number 0.0)
+let%test _ = "1" =  value_to_str (Number 1.0)
+let%test _ = "1" =  value_to_str (Number 1.00)
+let%test _ = "1.1" =  value_to_str (Number 1.1)
+let%test _ = "1.25" =  value_to_str (Number 1.25)
 let%test _ = "[]" =  value_to_str (Values [])
-let%test _ = "[1]" =  value_to_str (Values [Int 1.])
-let%test _ = "[1, hello, true]" = value_to_str (Values [Int 1.; String "hello" ; Bool true])
+let%test _ = "[1]" =  value_to_str (Values [Number 1.])
+let%test _ = "[1, hello, true]" = value_to_str (Values [Number 1.; String "hello" ; Bool true])
