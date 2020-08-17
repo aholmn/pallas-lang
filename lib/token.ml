@@ -29,6 +29,8 @@ type token =
   | LeftBracket
   | RightBracket
   | While
+  | For
+  | In
 
 let str = function
   | Str v        -> v
@@ -61,3 +63,5 @@ let str = function
   | LeftBracket  -> "["
   | RightBracket -> "]"
   | While        -> "while"
+  | For          -> "for"
+  | In           -> "in"

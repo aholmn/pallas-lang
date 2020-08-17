@@ -48,3 +48,14 @@ else
     println("something is wrong with my code");
 end
 ```
+
+### for each
+```
+for i in [1,2,3,4,5] do
+    println(i);
+end
+
+for i in "hello, world!" do
+    println(i);
+end
+```

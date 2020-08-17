@@ -162,8 +162,12 @@ and eval_stmt (env: Env.env) (s: Ast.stmt) : Env.env =
      ignore (eval_expr env expr);
      env
   | While (cond, stmts) ->
-     let closure = Env.make (Some env) in
-     eval_while closure cond stmts;
+     let inner = Env.make (Some env) in
+     eval_while inner cond stmts;
+     env
+  | For (element, iterable, stmts) ->
+     let inner = Env.make (Some env) in
+     eval_for_each inner element iterable stmts;
      env
   | Return value ->
      begin match value with
@@ -173,6 +177,38 @@ and eval_stmt (env: Env.env) (s: Ast.stmt) : Env.env =
         let value = eval_expr env expr in
         raise (ReturnException value)
      end
+
+and eval_for_each env element iterable stmts =
+  match element with
+  | Id name ->
+     begin match eval_expr env iterable with
+     | Values values ->
+        eval_for_array env name values stmts 0;
+     | String str ->
+        eval_for_string env name str stmts 0;
+     | something ->
+        raise (RuntimeError ("cannot iterate on " ^ Ast.value_to_str something))
+     end
+  | _ ->
+     raise (RuntimeError "iterator not an identifier")
+
+and eval_for_array env element values stmts i =
+  match i >= List.length values with
+  | true ->
+     ()
+  | false ->
+     Env.add env element (List.nth values i);
+     eval stmts env;
+     eval_for_array env element values stmts (i+1)
+
+and eval_for_string env element str stmts i =
+  match i >= String.length str with
+  | true ->
+     ()
+  | false ->
+     Env.add env element (Ast.String (String.sub str i 1));
+     eval stmts env;
+     eval_for_string env element str stmts (i+1)
 
 and eval_while env cond stmts =
   match truthy (eval_expr env cond) with

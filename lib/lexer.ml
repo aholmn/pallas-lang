@@ -69,6 +69,8 @@ and keyword s =
   | "def"    -> Token.Def
   | "return" -> Token.Return
   | "while"  -> Token.While
+  | "for"    -> Token.For
+  | "in"     -> Token.In
   | _        -> Token.Id s
 
 

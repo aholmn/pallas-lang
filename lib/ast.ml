@@ -31,6 +31,7 @@ and stmt =
   | ExprStmt of expr
   | Return of expr option
   | While of expr * stmt list
+  | For of expr * expr * stmt list
 
 let rec value_to_str = function
   | Bool v -> Format.sprintf "%B" v
